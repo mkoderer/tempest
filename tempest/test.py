@@ -19,6 +19,7 @@ import atexit
 import functools
 import os
 import time
+import urllib
 
 import fixtures
 import nose.plugins.attrib
@@ -27,6 +28,7 @@ import testtools
 
 from tempest import clients
 from tempest.common import isolated_creds
+from tempest.common import generate_json
 from tempest import config
 from tempest import exceptions
 from tempest.openstack.common import log as logging
@@ -286,9 +288,11 @@ class BaseTestCase(testtools.TestCase,
             os = clients.Manager(username=username,
                                  password=password,
                                  tenant_name=tenant_name,
-                                 interface=cls._interface)
+                                 interface=cls._interface,
+                                 service=cls._service)
         else:
-            os = clients.Manager(interface=cls._interface)
+            os = clients.Manager(interface=cls._interface,
+                                 service=cls._service)
         return os
 
     @classmethod
@@ -304,7 +308,8 @@ class BaseTestCase(testtools.TestCase,
         """
         Returns an instance of the Identity Admin API client
         """
-        os = clients.AdminManager(interface=cls._interface)
+        os = clients.AdminManager(interface=cls._interface,
+                                  service=cls._service)
         admin_client = os.identity_client
         return admin_client
 
@@ -317,6 +322,85 @@ class BaseTestCase(testtools.TestCase,
             cls.config.identity.admin_password,
             cls.config.identity.uri
         )
+
+    def generate_negative(self, description, client):
+        """
+        Generate and execute a set of http calls on an api that are expected to
+        result in client errors. First it uses invalid resources that are part
+        of the url, and then invalid data for queries and http request bodies.
+
+        :param description: A dictionary with the following entries:
+            name (required) name for the api
+            http-method (required) one of HEAD,GET,PUT,POST,PATCH,DELETE
+            url (required) the url to be appended to the catalog url with '%s'
+                for each resource mentioned
+            resources: (optional) A list of resource names such as "server",
+                "flavor", etc. with an element for each '%s' in the url. This
+                method will call self.get_resource for each element when
+                constructing the positive test case template so negative
+                subclasses are expected to return valid resource ids when
+                appropriate.
+            json-schema (optional) A valid json schema that will be used to
+                create invalid data for the api calls. For "GET" and "HEAD",
+                the data is used to generate query strings appended to the url,
+                otherwise for the body of the http call.
+
+        :param client: An instance of NegativeRestClient.
+        """
+        LOG.info("Executing %s" % description["name"])
+        LOG.debug(description)
+        method = description["http-method"]
+        url = description["url"]
+        schema = description.get("json-schema", None)
+        resources = [self.get_resource(r) for
+                     r in description.get("resources", [])]
+        valid = None
+        if schema:
+            valid = generate_json.generate_valid(schema)
+
+        new_url, body = self._http_arguments(valid, url, method)
+        for i in range(len(resources)):
+            new_r = resources[:]
+            new_r[i] = "invalid-resource-id"
+            resp, resp_body = client.send_request(method, new_url,
+                                                  new_r, body=body)
+            self._check_negative_response(resp.status, resp_body)
+
+        if not schema:
+            return
+        for invalid in generate_json.generate_invalid(schema):
+            new_url, body = self._http_arguments(invalid, url, method)
+            resp, resp_body = client.send_request(method, new_url,
+                                                  resources, body=body)
+            self._check_negative_response(resp.status, resp_body)
+
+    def _http_arguments(self, json_dict, url, method):
+        LOG.debug("dict: %s url: %s method: %s" % (json_dict, url, method))
+        if not json_dict:
+            return url, None
+        elif method in ["GET", "HEAD"]:
+            return "%s?%s" % (url, urllib.urlencode(json_dict)), None
+        else:
+            return url, json_dict
+
+    def _check_negative_response(self, status, body, expected_status=None):
+        self.assertTrue(status >= 400 and status < 500 and status != 413,
+                        "Expected client error, got %s:%s" %
+                        (status, body))
+        self.assertTrue(expected_status is None or expected_status == status,
+                        "Expected %s, got %s:%s" %
+                        (expected_status, status, body))
+
+    def get_resource(self, name):
+        """
+        Return a valid uuid for a type of resource. If a real resource is
+        needed as part of a url then this method should return one. Otherwise
+        it can return None.
+
+        :param name: The name of the kind of resource such as "flavor", "role",
+            etc.
+        """
+        return None
 
 
 def call_until_true(func, duration, sleep_for):
