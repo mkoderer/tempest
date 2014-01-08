@@ -27,8 +27,8 @@ import testresources
 import testtools
 
 from tempest import clients
-from tempest.common import isolated_creds
 from tempest.common import generate_json
+from tempest.common import isolated_creds
 from tempest import config
 from tempest import exceptions
 from tempest.openstack.common import log as logging
@@ -230,6 +230,7 @@ class BaseTestCase(testtools.TestCase,
     config = CONF
 
     setUpClassCalled = False
+    _service = None
 
     @classmethod
     def setUpClass(cls):
