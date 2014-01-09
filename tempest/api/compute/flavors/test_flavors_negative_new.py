@@ -15,49 +15,62 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
+import testscenarios
 
 from tempest.api.compute import base
-from tempest import exceptions
 from tempest.test import attr
 
-
-list_flavors_with_detail = \
-    {"name": "list-flavors-with-detail",
-     "http-method": "GET",
-     "url": "flavors/detail",
-     "json-schema":
-        {"type": "object",
-         "properties": {
-                        "minRam": {"type": "integer"},
-                        "minDisk": {"type": "integer"}
-                        }
-         }
-     }
+load_tests = testscenarios.load_tests_apply_scenarios
 
 
-get_flavor_details = \
-    {"name": "get-flavor-details",
-     "http-method": "GET",
-     "url": "flavors/%s",
-     "resources": ["flavor"]
-     }
-
-
-class NewFlavorsNegativeTestJSON(base.BaseV2ComputeTest):
+class NewFlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest):
     _interface = 'json'
     _service = 'compute'
 
+    _description = \
+        {"name": "list-flavors-with-detail",
+         "http-method": "GET",
+         "url": "flavors/detail",
+         "json-schema":
+            {
+                "type": "object",
+                "properties": {"minRam": {"type": "integer"},
+                               "minDisk": {"type": "integer"}
+                               }
+            }
+         }
+
+    scenarios = base.BaseV2ComputeTest.generate_negative_scenario(_description)
+
     @classmethod
     def setUpClass(cls):
-        super(NewFlavorsNegativeTestJSON, cls).setUpClass()
+        super(NewFlavorDetailsNegativeTestJSON, cls).setUpClass()
         cls.client = cls.os.negative_client
 
     @attr(type=['negative', 'gate'])
     def test_list_flavors_with_detail(self):
-        self.generate_negative(list_flavors_with_detail, self.client)
+        self.execute_negative_test(self._description, self.client)
+
+
+class NewFlavorsListNegativeTestJSON(base.BaseV2ComputeTest):
+    _interface = 'json'
+    _service = 'compute'
+
+    _description = \
+        {"name": "get-flavor-details",
+         "http-method": "GET",
+         "url": "flavors/%s",
+         "resources": ["flavor"]
+         }
+
+    scenarios = base.BaseV2ComputeTest.generate_negative_scenario(_description)
+
+    @classmethod
+    def setUpClass(cls):
+        super(NewFlavorsListNegativeTestJSON, cls).setUpClass()
+        cls.client = cls.os.negative_client
 
     @attr(type=['negative', 'gate'])
     def test_get_flavor_details(self):
         # flavor details are not returned for non-existent flavors
-        self.generate_negative(get_flavor_details, self.client)
+        self.execute_negative_test(self._description, self.client)

@@ -37,12 +37,12 @@ def generate_valid(schema):
 
 def generate_valid_string(schema):
     size = schema.get("minLength", 0)
-    # TODO: handle format and pattern
+    # TODO(dkr mko): handle format and pattern
     return "x" * size
 
 
 def generate_valid_integer(schema):
-    # TODO: handle multipleOf
+    # TODO(dkr mko): handle multipleOf
     if "minimum" in schema:
         minimum = schema["minimum"]
         if "exclusiveMinimum" not in schema:
@@ -78,31 +78,33 @@ def generate_invalid(schema):
 
 
 def generate_invalid_string(schema):
-    invalids = [4, None]
+    invalids = [("inv_str_number", 4), ("inv_str_none", None)]
     min_length = schema.get("minLength", 0)
     if min_length > 0:
-        invalids.append("x" * (min_length - 1))
+        invalids.append(("inv_str_min_length", "x"
+                         * (min_length - 1)))
     max_length = schema.get("maxLength", -1)
     if max_length > -1:
-        invalids.append("x" * (max_length + 1))
-    # TODO: handle format and pattern
+        invalids.append(("inv_str_max_length", "x"
+                         * (max_length + 1)))
+    # TODO(dkr mko): handle format and pattern
     return invalids
 
 
 def generate_invalid_integer(schema):
-    # TODO: handle multipleOf
-    invalids = ["xx", None]
+    # TODO(dkr mko): handle multipleOf
+    invalids = [("inv_int_str", "xx"), ("inv_int_none", None)]
 
     if "minimum" in schema:
         minimum = schema["minimum"]
         if "exclusiveMinimum" not in schema:
             minimum -= 1
-        invalids.append(minimum)
+        invalids.append(("inv_int_min", minimum))
     if "maximum" in schema:
         maximum = schema["maximum"]
         if "exclusiveMaximum" not in schema:
             maximum += 1
-        invalids.append(maximum)
+        invalids.append(("inv_int_max", maximum))
     return invalids
 
 
@@ -115,32 +117,28 @@ def generate_invalid_object(schema):
     for r in required:
         new_valid = copy.deepcopy(valid)
         del new_valid[r]
-        invalids.append(new_valid)
+        invalids.append(("inv_obj_del_attr", new_valid))
 
     if not schema.get("additionalProperties", True):
         new_valid = copy.deepcopy(valid)
         new_valid["$$$$$$$$$$"] = "xxx"
-        invalids.append(new_valid)
+        invalids.append(("inv_obj_add_prop", new_valid))
 
     for k, v in properties.iteritems():
         for invalid in generate_invalid(v):
             new_valid = copy.deepcopy(valid)
-            new_valid[k] = invalid
-            invalids.append(new_valid)
+            new_valid[k] = invalid[1]
+            invalids.append(("prop_%s_%s" % (k, invalid[0]), new_valid))
 
     LOG.debug("generate_invalid_object return: %s" % invalids)
     return invalids
 
 
-type_map_valid = {
-                  "string": generate_valid_string,
+type_map_valid = {"string": generate_valid_string,
                   "integer": generate_valid_integer,
-                  "object": generate_valid_object
-                  }
+                  "object": generate_valid_object}
 
 
-type_map_invalid = {
-                    "string": generate_invalid_string,
+type_map_invalid = {"string": generate_invalid_string,
                     "integer": generate_invalid_integer,
-                    "object": generate_invalid_object
-                  }
+                    "object": generate_invalid_object}

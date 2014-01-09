@@ -324,9 +324,46 @@ class BaseTestCase(testtools.TestCase,
             cls.config.identity.uri
         )
 
-    def generate_negative(self, description, client):
+    @staticmethod
+    def generate_negative_scenario(description):
         """
-        Generate and execute a set of http calls on an api that are expected to
+        Generates the test scenario list for a given description.
+
+        :param description: A dictionary with the following entries:
+            name (required) name for the api
+            http-method (required) one of HEAD,GET,PUT,POST,PATCH,DELETE
+            url (required) the url to be appended to the catalog url with '%s'
+                for each resource mentioned
+            resources: (optional) A list of resource names such as "server",
+                "flavor", etc. with an element for each '%s' in the url. This
+                method will call self.get_resource for each element when
+                constructing the positive test case template so negative
+                subclasses are expected to return valid resource ids when
+                appropriate.
+            json-schema (optional) A valid json schema that will be used to
+                create invalid data for the api calls. For "GET" and "HEAD",
+                the data is used to generate query strings appended to the url,
+                otherwise for the body of the http call.
+        """
+        LOG.debug(description)
+        schema = description.get("json-schema", None)
+        resources = description.get("resources", [])
+        scenario_list = []
+        for resource in resources:
+            LOG.debug("Add resource to test %s" % resource)
+            scn_name = "inv_res_%s" % (resource)
+            scenario_list.append((scn_name, {"resource": resource}))
+        if not schema:
+            return scenario_list
+
+        for invalid in generate_json.generate_invalid(schema):
+            scenario_list.append((invalid[0], {"schema": invalid[1]}))
+        LOG.debug(scenario_list)
+        return scenario_list
+
+    def execute_negative_test(self, description, client):
+        """
+        Execute a http call on an api that are expected to
         result in client errors. First it uses invalid resources that are part
         of the url, and then invalid data for queries and http request bodies.
 
@@ -350,27 +387,27 @@ class BaseTestCase(testtools.TestCase,
         """
         LOG.info("Executing %s" % description["name"])
         LOG.debug(description)
+        LOG.debug(dir(self))
+        LOG.debug(self.scenarios)
         method = description["http-method"]
         url = description["url"]
-        schema = description.get("json-schema", None)
+
         resources = [self.get_resource(r) for
                      r in description.get("resources", [])]
-        valid = None
-        if schema:
-            valid = generate_json.generate_valid(schema)
 
-        new_url, body = self._http_arguments(valid, url, method)
-        for i in range(len(resources)):
-            new_r = resources[:]
-            new_r[i] = "invalid-resource-id"
+        if hasattr(self, "resource"):
+            valid = None
+            schema = description.get("json-schema", None)
+            if schema:
+                valid = generate_json.generate_valid(schema)
+            new_url, body = self._http_arguments(valid, url, method)
             resp, resp_body = client.send_request(method, new_url,
-                                                  new_r, body=body)
+                                                  resources, body=body)
             self._check_negative_response(resp.status, resp_body)
-
-        if not schema:
             return
-        for invalid in generate_json.generate_invalid(schema):
-            new_url, body = self._http_arguments(invalid, url, method)
+
+        if hasattr(self, "schema"):
+            new_url, body = self._http_arguments(self.schema, url, method)
             resp, resp_body = client.send_request(method, new_url,
                                                   resources, body=body)
             self._check_negative_response(resp.status, resp_body)
@@ -401,6 +438,9 @@ class BaseTestCase(testtools.TestCase,
         :param name: The name of the kind of resource such as "flavor", "role",
             etc.
         """
+        if hasattr(self, "resource") and self.resources == name:
+            LOG.debug("Return invalid resource (%s)" % name)
+            return self.resources
         return None
 
 
