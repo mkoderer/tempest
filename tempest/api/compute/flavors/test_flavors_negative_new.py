@@ -18,7 +18,7 @@
 import testscenarios
 
 from tempest.api.compute import base
-from tempest.test import attr
+from tempest import test
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
@@ -40,14 +40,14 @@ class NewFlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest):
             }
          }
 
-    scenarios = base.BaseV2ComputeTest.generate_negative_scenario(_description)
+    scenarios = test.BaseTestCase.generate_negative_scenario(_description)
 
     @classmethod
     def setUpClass(cls):
         super(NewFlavorDetailsNegativeTestJSON, cls).setUpClass()
         cls.client = cls.os.negative_client
 
-    @attr(type=['negative', 'gate'])
+    @test.attr(type=['negative', 'gate'])
     def test_list_flavors_with_detail(self):
         self.execute_negative_test(self._description, self.client)
 
@@ -63,14 +63,14 @@ class NewFlavorsListNegativeTestJSON(base.BaseV2ComputeTest):
          "resources": ["flavor"]
          }
 
-    scenarios = base.BaseV2ComputeTest.generate_negative_scenario(_description)
+    scenarios = test.BaseTestCase.generate_negative_scenario(_description)
 
     @classmethod
     def setUpClass(cls):
         super(NewFlavorsListNegativeTestJSON, cls).setUpClass()
         cls.client = cls.os.negative_client
 
-    @attr(type=['negative', 'gate'])
+    @test.attr(type=['negative', 'gate'])
     def test_get_flavor_details(self):
         # flavor details are not returned for non-existent flavors
         self.execute_negative_test(self._description, self.client)
