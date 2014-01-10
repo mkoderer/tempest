@@ -354,6 +354,7 @@ class BaseNegativeAutoTest(BaseTestCase):
                 otherwise for the body of the http call.
         """
         LOG.debug(description)
+        generate_json.validate_negative_test_schema(description)
         schema = description.get("json-schema", None)
         resources = description.get("resources", [])
         scenario_list = []

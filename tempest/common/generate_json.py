@@ -17,6 +17,9 @@
 #    under the License.
 
 import copy
+import json
+import jsonschema
+import os
 
 from tempest.openstack.common import log as logging
 
@@ -142,3 +145,29 @@ type_map_valid = {"string": generate_valid_string,
 type_map_invalid = {"string": generate_invalid_string,
                     "integer": generate_invalid_integer,
                     "object": generate_invalid_object}
+
+
+def get_draft4_jsonschema():
+     fn = os.path.join(os.path.dirname(__file__), 'jsonschema-draft4.json')
+     return json.load(open(fn))
+ 
+ 
+schema = {"type": "object",
+          "properties": 
+            {"name": {"type": "string"},
+             "http-method": {"enum": ["GET", "PUT", "HEAD",
+                                      "POST", "PATCH", "DELETE"]},
+             "url": {"type": "string"},
+             "json-schema": get_draft4_jsonschema(),
+             "resources": {"type": "array",
+                           "items": { "type": "string" }}
+             },
+             
+        "required": ["name", "http-method", "url"],
+        'additionalProperties': False,
+}
+
+
+def validate_negative_test_schema(nts):
+    jsonschema.validate(nts, schema)
+
