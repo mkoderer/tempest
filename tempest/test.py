@@ -324,8 +324,16 @@ class BaseTestCase(testtools.TestCase,
             cls.config.identity.uri
         )
 
+
+class BaseNegativeAutoTest(BaseTestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(BaseNegativeAutoTest, cls).setUpClass()
+        os = cls.get_client_manager()
+        cls.client = os.negative_client
+
     @staticmethod
-    def generate_negative_scenario(description):
+    def generate_scenario(description):
         """
         Generates the test scenario list for a given description.
 
@@ -361,7 +369,7 @@ class BaseTestCase(testtools.TestCase,
         LOG.debug(scenario_list)
         return scenario_list
 
-    def execute_negative_test(self, description, client):
+    def execute(self, description, client):
         """
         Execute a http call on an api that are expected to
         result in client errors. First it uses invalid resources that are part
@@ -387,8 +395,6 @@ class BaseTestCase(testtools.TestCase,
         """
         LOG.info("Executing %s" % description["name"])
         LOG.debug(description)
-        LOG.debug(dir(self))
-        LOG.debug(self.scenarios)
         method = description["http-method"]
         url = description["url"]
 
