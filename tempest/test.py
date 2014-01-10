@@ -423,7 +423,7 @@ class BaseNegativeAutoTest(BaseTestCase):
         LOG.debug("dict: %s url: %s method: %s" % (json_dict, url, method))
         if not json_dict:
             return url, None
-        elif method in ["GET", "HEAD"]:
+        elif method in ["GET", "HEAD", "PUT", "DELETE"]:
             return "%s?%s" % (url, urllib.urlencode(json_dict)), None
         else:
             return url, json_dict
