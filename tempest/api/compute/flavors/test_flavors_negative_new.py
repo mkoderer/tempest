@@ -17,12 +17,15 @@
 
 import testscenarios
 
+from tempest.api.compute import base
 from tempest import test
+
 
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class NewFlavorDetailsNegativeTestJSON(test.BaseNegativeAutoTest):
+class NewFlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
+                                       test.NegativeAutoTest):
     _interface = 'json'
     _service = 'compute'
 
@@ -39,14 +42,15 @@ class NewFlavorDetailsNegativeTestJSON(test.BaseNegativeAutoTest):
             }
          }
 
-    scenarios = test.BaseNegativeAutoTest.generate_scenario(_description)
+    scenarios = test.NegativeAutoTest.generate_scenario(_description)
 
     @test.attr(type=['negative', 'gate'])
     def test_list_flavors_with_detail(self):
         self.execute(self._description, self.client)
 
 
-class NewFlavorsListNegativeTestJSON(test.BaseNegativeAutoTest):
+class NewFlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
+                                     test.NegativeAutoTest):
     _interface = 'json'
     _service = 'compute'
 
@@ -57,7 +61,7 @@ class NewFlavorsListNegativeTestJSON(test.BaseNegativeAutoTest):
          "resources": ["flavor"]
          }
 
-    scenarios = test.BaseNegativeAutoTest.generate_scenario(_description)
+    scenarios = test.NegativeAutoTest.generate_scenario(_description)
 
     @test.attr(type=['negative', 'gate'])
     def test_get_flavor_details(self):

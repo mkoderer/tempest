@@ -20,6 +20,7 @@ import functools
 import os
 import time
 import urllib
+import uuid
 
 import fixtures
 import nose.plugins.attrib
@@ -325,10 +326,23 @@ class BaseTestCase(testtools.TestCase,
         )
 
 
-class BaseNegativeAutoTest(BaseTestCase):
+class NegativeAutoTest(BaseTestCase):
+
+    # Use this dict to create new resources. If this
+    # resource will be shared upon multiple tests
+    # define it here. If it's just local you can
+    # create a resouce in setUpClass and put the
+    # id in 'ref' or deliver a function that creates
+    # it.
+    resource_dict = {"flavor": {"ref": "flavor_ref"},
+                     "volume": {"func": "create_volume",
+                                "kwargs": {"size": 1}
+                                },
+                     }
+
     @classmethod
     def setUpClass(cls):
-        super(BaseNegativeAutoTest, cls).setUpClass()
+        super(NegativeAutoTest, cls).setUpClass()
         os = cls.get_client_manager()
         cls.client = os.negative_client
 
@@ -361,7 +375,9 @@ class BaseNegativeAutoTest(BaseTestCase):
         for resource in resources:
             LOG.debug("Add resource to test %s" % resource)
             scn_name = "inv_res_%s" % (resource)
-            scenario_list.append((scn_name, {"resource": resource}))
+            scenario_list.append((scn_name, {"resource": (resource,
+                                                          str(uuid.uuid4()))
+                                             }))
         if not schema:
             return scenario_list
 
@@ -436,7 +452,7 @@ class BaseNegativeAutoTest(BaseTestCase):
                         "Expected %s, got %s:%s" %
                         (expected_status, status, body))
 
-    def get_resource(self, name):
+    def get_resource(self, name, use_ref=True):
         """
         Return a valid uuid for a type of resource. If a real resource is
         needed as part of a url then this method should return one. Otherwise
@@ -444,10 +460,23 @@ class BaseNegativeAutoTest(BaseTestCase):
 
         :param name: The name of the kind of resource such as "flavor", "role",
             etc.
+        :use_ref: False will force the creation of the resource
         """
-        if hasattr(self, "resource") and self.resources == name:
-            LOG.debug("Return invalid resource (%s)" % name)
-            return self.resources
+        if hasattr(self, "resource") and self.resource[0] == name:
+            LOG.debug("Return invalid resource (%s) value: %s" %
+                      (self.resource[0], self.resource[1]))
+            return self.resource[1]
+        if (self.resource_dict[name]):
+            if 'ref' in self.resource_dict[name] and use_ref:
+                return getattr(self, self.resource_dict[name]['ref'])
+            func_name = self.resource_dict[name]["func"]
+            arguments = self.resource_dict[name]["kwargs"]
+            method = getattr(self, func_name)
+            result = method(arguments)
+            result_property = 'id'
+            if 'result_property' in self.resource_dict[name]:
+                result_property = self.resource_dict[name]['result_property']
+            return result[result_property]
         return None
 
 
