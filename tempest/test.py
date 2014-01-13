@@ -327,7 +327,7 @@ class BaseTestCase(testtools.TestCase,
 
 
 class NegativeAutoTest(BaseTestCase):
-    
+
     _resources = {}
 
     @classmethod
@@ -441,6 +441,7 @@ class NegativeAutoTest(BaseTestCase):
         self.assertTrue(expected_status is None or expected_status == status,
                         "Expected %s, got %s:%s" %
                         (expected_status, status, body))
+
     @classmethod
     def set_resource(cls, name, resource):
         cls._resources[name] = resource

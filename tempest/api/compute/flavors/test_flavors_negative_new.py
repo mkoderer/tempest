@@ -62,12 +62,11 @@ class NewFlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
          }
 
     scenarios = test.NegativeAutoTest.generate_scenario(_description)
-    
+
     @classmethod
     def setUpClass(cls):
         super(NewFlavorsListNegativeTestJSON, cls).setUpClass()
         cls.set_resource("flavor", cls.flavor_ref)
-
 
     @test.attr(type=['negative', 'gate'])
     def test_get_flavor_details(self):
