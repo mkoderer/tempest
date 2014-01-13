@@ -327,18 +327,8 @@ class BaseTestCase(testtools.TestCase,
 
 
 class NegativeAutoTest(BaseTestCase):
-
-    # Use this dict to create new resources. If this
-    # resource will be shared upon multiple tests
-    # define it here. If it's just local you can
-    # create a resouce in setUpClass and put the
-    # id in 'ref' or deliver a function that creates
-    # it.
-    resource_dict = {"flavor": {"ref": "flavor_ref"},
-                     "volume": {"func": "create_volume",
-                                "kwargs": {"size": 1}
-                                },
-                     }
+    
+    _resources = {}
 
     @classmethod
     def setUpClass(cls):
@@ -451,6 +441,9 @@ class NegativeAutoTest(BaseTestCase):
         self.assertTrue(expected_status is None or expected_status == status,
                         "Expected %s, got %s:%s" %
                         (expected_status, status, body))
+    @classmethod
+    def set_resource(cls, name, resource):
+        cls._resources[name] = resource
 
     def get_resource(self, name, use_ref=True):
         """
@@ -466,17 +459,8 @@ class NegativeAutoTest(BaseTestCase):
             LOG.debug("Return invalid resource (%s) value: %s" %
                       (self.resource[0], self.resource[1]))
             return self.resource[1]
-        if (self.resource_dict[name]):
-            if 'ref' in self.resource_dict[name] and use_ref:
-                return getattr(self, self.resource_dict[name]['ref'])
-            func_name = self.resource_dict[name]["func"]
-            arguments = self.resource_dict[name]["kwargs"]
-            method = getattr(self, func_name)
-            result = method(arguments)
-            result_property = 'id'
-            if 'result_property' in self.resource_dict[name]:
-                result_property = self.resource_dict[name]['result_property']
-            return result[result_property]
+        if name in self._resources:
+            return self._resources[name]
         return None
 
 
