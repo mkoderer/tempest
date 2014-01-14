@@ -15,40 +15,60 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
+import testscenarios
 
 from tempest.api.compute import base
-from tempest import exceptions
-from tempest.test import attr
+from tempest import test
 
 
-class FlavorsNegativeTestJSON(base.BaseV2ComputeTest):
+load_tests = testscenarios.load_tests_apply_scenarios
+
+
+class FlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
+                                    test.NegativeAutoTest):
     _interface = 'json'
+    _service = 'compute'
+
+    _description = \
+        {"name": "list-flavors-with-detail",
+         "http-method": "GET",
+         "url": "flavors/detail",
+         "json-schema":
+            {
+                "type": "object",
+                "properties": {"minRam": {"type": "integer"},
+                               "minDisk": {"type": "integer"}
+                               }
+            }
+         }
+
+    scenarios = test.NegativeAutoTest.generate_scenario(_description)
+
+    @test.attr(type=['negative', 'gate'])
+    def test_list_flavors_with_detail(self):
+        self.execute(self._description, self.client)
+
+
+class FlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
+                                  test.NegativeAutoTest):
+    _interface = 'json'
+    _service = 'compute'
+
+    _description = \
+        {"name": "get-flavor-details",
+         "http-method": "GET",
+         "url": "flavors/%s",
+         "resources": ["flavor"]
+         }
+
+    scenarios = test.NegativeAutoTest.generate_scenario(_description)
 
     @classmethod
     def setUpClass(cls):
-        super(FlavorsNegativeTestJSON, cls).setUpClass()
-        cls.client = cls.flavors_client
+        super(FlavorsListNegativeTestJSON, cls).setUpClass()
+        cls.set_resource("flavor", cls.flavor_ref)
 
-    @attr(type=['negative', 'gate'])
-    def test_invalid_minRam_filter(self):
-        self.assertRaises(exceptions.BadRequest,
-                          self.client.list_flavors_with_detail,
-                          {'minRam': 'invalid'})
-
-    @attr(type=['negative', 'gate'])
-    def test_invalid_minDisk_filter(self):
-        self.assertRaises(exceptions.BadRequest,
-                          self.client.list_flavors_with_detail,
-                          {'minDisk': 'invalid'})
-
-    @attr(type=['negative', 'gate'])
-    def test_non_existent_flavor_id(self):
+    @test.attr(type=['negative', 'gate'])
+    def test_get_flavor_details(self):
         # flavor details are not returned for non-existent flavors
-        nonexistent_flavor_id = str(uuid.uuid4())
-        self.assertRaises(exceptions.NotFound, self.client.get_flavor_details,
-                          nonexistent_flavor_id)
-
-
-class FlavorsNegativeTestXML(FlavorsNegativeTestJSON):
-    _interface = 'xml'
+        self.execute(self._description, self.client)
