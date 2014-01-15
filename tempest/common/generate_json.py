@@ -82,7 +82,7 @@ def generate_invalid(schema):
             schema_type = "integer"
         else:
             raise Exception("non-integer list types not supported")
-    if isinstance(type_map_invalid[schema_type], list): 
+    if isinstance(type_map_invalid[schema_type], list):
         result = []
         for generator in type_map_invalid[schema_type]:
             ret = generator(schema)
@@ -92,7 +92,7 @@ def generate_invalid(schema):
                     expected_value = schema["results"][ret[0]]
             if ret is not None:
                 result.append((ret[0], ret[1], expected_value))
-        LOG.debug("result: %s" %traceback.format_stack())
+        LOG.debug("result: %s" % traceback.format_stack())
         return result
     return type_map_invalid[schema_type](schema)
 
@@ -106,17 +106,21 @@ def generator(fn):
         return
     return wrapped
 
+
 @generator
-def gen_number(_):
+def gen_int(_):
     return 4
+
 
 @generator
 def gen_string(_):
     return "XXXXXX"
 
+
 def gen_none(_):
     # Note(mkoderer): it's not using the decorator otherwise it'd be filtered
     return ('gen_none', None)
+
 
 @generator
 def gen_str_min_length(schema):
@@ -124,11 +128,13 @@ def gen_str_min_length(schema):
     if min_length > 0:
         return  "x" * (min_length - 1)
 
+
 @generator
 def gen_str_max_length(schema):
     max_length = schema.get("maxLength", -1)
     if max_length > -1:
         return "x" * (max_length + 1)
+
 
 @generator
 def gen_int_min(schema):
@@ -138,6 +144,7 @@ def gen_int_min(schema):
             minimum -= 1
         return minimum
 
+
 @generator
 def gen_int_max(schema):
     if "maximum" in schema:
@@ -145,6 +152,7 @@ def gen_int_max(schema):
         if "exclusiveMaximum" not in schema:
             maximum += 1
         return maximum
+
 
 def generate_invalid_object(schema):
     LOG.debug("generate_invalid_object: %s" % schema)
@@ -179,7 +187,7 @@ type_map_valid = {"string": generate_valid_string,
                   "object": generate_valid_object}
 
 
-type_map_invalid = {"string": [gen_number,
+type_map_invalid = {"string": [gen_int,
                                gen_none,
                                gen_str_min_length,
                                gen_str_max_length],
@@ -202,7 +210,9 @@ schema = {"type": "object",
                                     "POST", "PATCH", "DELETE"]},
            "url": {"type": "string"},
            "json-schema": get_draft4_jsonschema(),
-           "resources": {"type": "array", "items": {"type": "string"}}
+           "resources": {"type": "array", "items": {"type": "string"}},
+           "results": {"type": "object",
+                       "properties": {}}
            },
           "required": ["name", "http-method", "url"],
           "additionalProperties": False,
