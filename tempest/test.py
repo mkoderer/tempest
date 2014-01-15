@@ -371,9 +371,9 @@ class NegativeAutoTest(BaseTestCase):
                                              }))
         if not schema:
             return scenario_list
-
         for invalid in generate_json.generate_invalid(schema):
-            scenario_list.append((invalid[0], {"schema": invalid[1]}))
+            scenario_list.append((invalid[0], {"schema": invalid[1],
+                                               "expected_result": None}))
         LOG.debug(scenario_list)
         return scenario_list
 

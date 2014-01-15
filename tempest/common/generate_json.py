@@ -20,6 +20,8 @@ import copy
 import json
 import jsonschema
 import os
+import pprint
+import traceback
 
 from tempest.openstack.common import log as logging
 
@@ -80,43 +82,69 @@ def generate_invalid(schema):
             schema_type = "integer"
         else:
             raise Exception("non-integer list types not supported")
+    if isinstance(type_map_invalid[schema_type], list): 
+        result = []
+        for generator in type_map_invalid[schema_type]:
+            ret = generator(schema)
+            expected_value = None
+            if "results" in schema:
+                if ret[0] in schema["results"]:
+                    expected_value = schema["results"][ret[0]]
+            if ret is not None:
+                result.append((ret[0], ret[1], expected_value))
+        LOG.debug("result: %s" %traceback.format_stack())
+        return result
     return type_map_invalid[schema_type](schema)
 
 
-def generate_invalid_string(schema):
-    invalids = [("inv_str_number", 4), ("inv_str_none", None)]
+def generator(fn):
+    def wrapped(*args):
+        result = fn(*args)
+        if result is not None:
+            LOG.debug(result)
+            return (fn.__name__, result)
+        return
+    return wrapped
+
+@generator
+def gen_number(_):
+    return 4
+
+@generator
+def gen_string(_):
+    return "XXXXXX"
+
+def gen_none(_):
+    # Note(mkoderer): it's not using the decorator otherwise it'd be filtered
+    return ('gen_none', None)
+
+@generator
+def gen_str_min_length(schema):
     min_length = schema.get("minLength", 0)
     if min_length > 0:
-        invalids.append(("inv_str_min_length", "x"
-                         * (min_length - 1)))
+        return  "x" * (min_length - 1)
+
+@generator
+def gen_str_max_length(schema):
     max_length = schema.get("maxLength", -1)
     if max_length > -1:
-        invalids.append(("inv_str_max_length", "x"
-                         * (max_length + 1)))
-    # TODO(dkr mko): handle format and pattern
-    return invalids
+        return "x" * (max_length + 1)
 
-
-def generate_invalid_integer(schema):
-    # TODO(dkr mko): handle multipleOf
-    if isinstance(schema["type"], list):
-        # Could be a string
-        invalids = [("inv_int_none", None)]
-    else:
-        invalids = [("inv_int_str", "xx"), ("inv_int_none", None)]
-
+@generator
+def gen_int_min(schema):
     if "minimum" in schema:
         minimum = schema["minimum"]
         if "exclusiveMinimum" not in schema:
             minimum -= 1
-        invalids.append(("inv_int_min", minimum))
+        return minimum
+
+@generator
+def gen_int_max(schema):
     if "maximum" in schema:
         maximum = schema["maximum"]
         if "exclusiveMaximum" not in schema:
             maximum += 1
-        invalids.append(("inv_int_max", maximum))
-    return invalids
-
+        return maximum
 
 def generate_invalid_object(schema):
     LOG.debug("generate_invalid_object: %s" % schema)
@@ -136,9 +164,11 @@ def generate_invalid_object(schema):
 
     for k, v in properties.iteritems():
         for invalid in generate_invalid(v):
+            LOG.debug(invalid)
             new_valid = copy.deepcopy(valid)
             new_valid[k] = invalid[1]
-            invalids.append(("prop_%s_%s" % (k, invalid[0]), new_valid))
+            invalids.append(("prop_%s_%s" % (k, invalid[0]), new_valid,
+                                             invalid[2]))
 
     LOG.debug("generate_invalid_object return: %s" % invalids)
     return invalids
@@ -149,8 +179,14 @@ type_map_valid = {"string": generate_valid_string,
                   "object": generate_valid_object}
 
 
-type_map_invalid = {"string": generate_invalid_string,
-                    "integer": generate_invalid_integer,
+type_map_invalid = {"string": [gen_number,
+                               gen_none,
+                               gen_str_min_length,
+                               gen_str_max_length],
+                    "integer": [gen_string,
+                                gen_none,
+                                gen_int_min,
+                                gen_int_max],
                     "object": generate_invalid_object}
 
 
