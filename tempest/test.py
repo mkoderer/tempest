@@ -444,6 +444,14 @@ class NegativeAutoTest(BaseTestCase):
 
     @classmethod
     def set_resource(cls, name, resource):
+        """
+        This function can be used in setUpClass context to register a resoruce
+        for a test.
+
+        :param name: The name of the kind of resource such as "flavor", "role",
+            etc.
+        :resource: The id of the resource
+        """
         cls._resources[name] = resource
 
     def get_resource(self, name, use_ref=True):
