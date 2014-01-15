@@ -75,8 +75,11 @@ def generate_invalid(schema):
     """
     LOG.debug("generate_invalid: %s" % schema)
     schema_type = schema["type"]
-#    if isinstance(schema_type, list):
-#        return generate_invalid_value_from_list(schema, schema_type)
+    if isinstance(schema_type, list):
+        if "integer" in schema_type:
+            schema_type = "integer"
+        else:
+            raise Exception("non-integer list types not supported")
     return type_map_invalid[schema_type](schema)
 
 
@@ -96,7 +99,11 @@ def generate_invalid_string(schema):
 
 def generate_invalid_integer(schema):
     # TODO(dkr mko): handle multipleOf
-    invalids = [("inv_int_str", "xx"), ("inv_int_none", None)]
+    if isinstance(schema["type"], list):
+        # Could be a string
+        invalids = [("inv_int_none", None)]
+    else:
+        invalids = [("inv_int_str", "xx"), ("inv_int_none", None)]
 
     if "minimum" in schema:
         minimum = schema["minimum"]

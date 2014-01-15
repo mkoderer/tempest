@@ -17,6 +17,7 @@
 
 import atexit
 import functools
+import json
 import os
 import time
 import urllib
@@ -432,7 +433,7 @@ class NegativeAutoTest(BaseTestCase):
         elif method in ["GET", "HEAD", "PUT", "DELETE"]:
             return "%s?%s" % (url, urllib.urlencode(json_dict)), None
         else:
-            return url, json_dict
+            return url, json.dumps(json_dict)
 
     def _check_negative_response(self, status, body, expected_status=None):
         self.assertTrue(status >= 400 and status < 500 and status != 413,
