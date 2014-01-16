@@ -373,7 +373,7 @@ class NegativeAutoTest(BaseTestCase):
             return scenario_list
         for invalid in generate_json.generate_invalid(schema):
             scenario_list.append((invalid[0], {"schema": invalid[1],
-                                               "expected_result": None}))
+                                               "expected_result": invalid[2]}))
         LOG.debug(scenario_list)
         return scenario_list
 
@@ -417,14 +417,20 @@ class NegativeAutoTest(BaseTestCase):
             new_url, body = self._http_arguments(valid, url, method)
             resp, resp_body = client.send_request(method, new_url,
                                                   resources, body=body)
-            self._check_negative_response(resp.status, resp_body)
+            self._check_negative_response(resp.status, resp_body,
+                                          getattr(self,
+                                                  "expected_result",
+                                                  None))
             return
 
         if hasattr(self, "schema"):
             new_url, body = self._http_arguments(self.schema, url, method)
             resp, resp_body = client.send_request(method, new_url,
                                                   resources, body=body)
-            self._check_negative_response(resp.status, resp_body)
+            self._check_negative_response(resp.status, resp_body,
+                                          getattr(self,
+                                                  "expected_result",
+                                                  None))
 
     def _http_arguments(self, json_dict, url, method):
         LOG.debug("dict: %s url: %s method: %s" % (json_dict, url, method))

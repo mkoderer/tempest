@@ -46,8 +46,8 @@ class GetConsoleOutputNegativeTestJSON(base.BaseV2ComputeTest,
                 }
                }
               },
-            "additionalProperties": False
-            }
+             "additionalProperties": False
+             }
          }
 
     scenarios = test.NegativeAutoTest.generate_scenario(_description)

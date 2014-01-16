@@ -36,8 +36,14 @@ class FlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
          "json-schema":
             {
                 "type": "object",
-                "properties": {"minRam": {"type": "integer"},
-                               "minDisk": {"type": "integer"}
+                "properties": {"minRam": {"type": "integer",
+                                          "results":
+                                          {'gen_none': 400,
+                                           'gen_string': 400}},
+                               "minDisk": {"type": "integer",
+                                           "results":
+                                           {'gen_none': 400,
+                                            'gen_string': 400}}
                                }
             }
          }
