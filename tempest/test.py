@@ -377,7 +377,7 @@ class NegativeAutoTest(BaseTestCase):
         LOG.debug(scenario_list)
         return scenario_list
 
-    def execute(self, description, client):
+    def execute(self, description):
         """
         Execute a http call on an api that are expected to
         result in client errors. First it uses invalid resources that are part
@@ -399,7 +399,6 @@ class NegativeAutoTest(BaseTestCase):
                 the data is used to generate query strings appended to the url,
                 otherwise for the body of the http call.
 
-        :param client: An instance of NegativeRestClient.
         """
         LOG.info("Executing %s" % description["name"])
         LOG.debug(description)
@@ -415,22 +414,16 @@ class NegativeAutoTest(BaseTestCase):
             if schema:
                 valid = generate_json.generate_valid(schema)
             new_url, body = self._http_arguments(valid, url, method)
-            resp, resp_body = client.send_request(method, new_url,
-                                                  resources, body=body)
-            self._check_negative_response(resp.status, resp_body,
-                                          getattr(self,
-                                                  "expected_result",
-                                                  None))
+            resp, resp_body = self.client.send_request(method, new_url,
+                                                       resources, body=body)
+            self._check_negative_response(resp.status, resp_body)
             return
 
         if hasattr(self, "schema"):
             new_url, body = self._http_arguments(self.schema, url, method)
-            resp, resp_body = client.send_request(method, new_url,
-                                                  resources, body=body)
-            self._check_negative_response(resp.status, resp_body,
-                                          getattr(self,
-                                                  "expected_result",
-                                                  None))
+            resp, resp_body = self.client.send_request(method, new_url,
+                                                       resources, body=body)
+            self._check_negative_response(resp.status, resp_body)
 
     def _http_arguments(self, json_dict, url, method):
         LOG.debug("dict: %s url: %s method: %s" % (json_dict, url, method))
@@ -441,13 +434,14 @@ class NegativeAutoTest(BaseTestCase):
         else:
             return url, json.dumps(json_dict)
 
-    def _check_negative_response(self, status, body, expected_status=None):
-        self.assertTrue(status >= 400 and status < 500 and status != 413,
+    def _check_negative_response(self, result, body):
+        expected_result = getattr(self, "expected_result", None)
+        self.assertTrue(result >= 400 and result < 500 and result != 413,
                         "Expected client error, got %s:%s" %
-                        (status, body))
-        self.assertTrue(expected_status is None or expected_status == status,
+                        (result, body))
+        self.assertTrue(expected_result is None or expected_result == result,
                         "Expected %s, got %s:%s" %
-                        (expected_status, status, body))
+                        (expected_result, result, body))
 
     @classmethod
     def set_resource(cls, name, resource):

@@ -60,4 +60,4 @@ class GetConsoleOutputNegativeTestJSON(base.BaseV2ComputeTest,
 
     @test.attr(type=['negative', 'gate'])
     def test_get_console_output(self):
-        self.execute(self._description, self.client)
+        self.execute(self._description)

@@ -52,7 +52,7 @@ class FlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
 
     @test.attr(type=['negative', 'gate'])
     def test_list_flavors_with_detail(self):
-        self.execute(self._description, self.client)
+        self.execute(self._description)
 
 
 class FlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
@@ -77,4 +77,4 @@ class FlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
     @test.attr(type=['negative', 'gate'])
     def test_get_flavor_details(self):
         # flavor details are not returned for non-existent flavors
-        self.execute(self._description, self.client)
+        self.execute(self._description)
