@@ -409,6 +409,9 @@ class NegativeAutoTest(BaseTestCase):
                      r in description.get("resources", [])]
 
         if hasattr(self, "resource"):
+            # Note(mkoderer): The resources list already contains an invalid
+            # entry (see get_resource).
+            # We just send a valid json-schema with it
             valid = None
             schema = description.get("json-schema", None)
             if schema:
