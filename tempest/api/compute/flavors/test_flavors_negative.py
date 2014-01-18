@@ -1,6 +1,4 @@
-# vim: tabstop=4 shiftwidth=4 softtabstop=4
-
-# Copyright 2013 OpenStack Foundation
+# Copyright 2014 Red Hat, Inc. & Deutsche Telekom AG
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -24,8 +22,8 @@ from tempest import test
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class FlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
-                                    test.NegativeAutoTest):
+class FlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
+                                  test.NegativeAutoTest):
     _interface = 'json'
     _service = 'compute'
 
@@ -55,8 +53,8 @@ class FlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
         self.execute(self._description)
 
 
-class FlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
-                                  test.NegativeAutoTest):
+class FlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
+                                    test.NegativeAutoTest):
     _interface = 'json'
     _service = 'compute'
 
@@ -71,7 +69,7 @@ class FlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
 
     @classmethod
     def setUpClass(cls):
-        super(FlavorsListNegativeTestJSON, cls).setUpClass()
+        super(FlavorDetailsNegativeTestJSON, cls).setUpClass()
         cls.set_resource("flavor", cls.flavor_ref)
 
     @test.attr(type=['negative', 'gate'])
