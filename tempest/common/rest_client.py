@@ -575,7 +575,7 @@ class RestClientXML(RestClient):
         return 'exceed' in resp_body.get('message', 'blabla')
 
 
-class NegativeRestClientJSON(RestClient):
+class NegativeRestClient(RestClient):
     """
     Version of RestClient that does not raise exceptions.
     """

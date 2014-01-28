@@ -15,7 +15,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from tempest.common.rest_client import NegativeRestClientJSON
+from tempest.common.rest_client import NegativeRestClient
 from tempest import config
 from tempest import exceptions
 from tempest.openstack.common import log as logging
@@ -348,13 +348,13 @@ class Manager(object):
             self.volumes_extension_client = VolumeExtensionClientJSON(
                 *client_args)
             self.hosts_v3_client = HostsV3ClientJSON(*client_args)
-            self.negative_client = NegativeRestClientJSON(*client_args)
+            self.negative_client = NegativeRestClient(*client_args)
             self.negative_client.service = service
 
             if client_args_v3_auth:
                 self.servers_client_v3_auth = ServersClientJSON(
                     *client_args_v3_auth)
-                self.negative_v3_client = NegativeRestClientJSON(
+                self.negative_v3_client = NegativeRestClient(
                     *client_args_v3_auth)
                 self.negative_v3_client.service = service
         else:

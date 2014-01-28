@@ -1,4 +1,4 @@
-# Copyright 2014 Red Hat, Inc. & Deutsche Telekom AG
+# Copyright 2013 OpenStack Foundation
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -13,66 +13,36 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import testscenarios
+import uuid
 
 from tempest.api.compute import base
-from tempest import test
+from tempest import exceptions
+from tempest.test import attr
 
 
-load_tests = testscenarios.load_tests_apply_scenarios
-
-
-class FlavorsListNegativeTestJSON(base.BaseV2ComputeTest,
-                                  test.NegativeAutoTest):
-    _interface = 'json'
-    _service = 'compute'
-
-    _description = \
-        {"name": "list-flavors-with-detail",
-         "http-method": "GET",
-         "url": "flavors/detail",
-         "json-schema":
-            {
-                "type": "object",
-                "properties": {"minRam": {"type": "integer",
-                                          "results":
-                                          {'gen_none': 400,
-                                           'gen_string': 400}},
-                               "minDisk": {"type": "integer",
-                                           "results":
-                                           {'gen_none': 400,
-                                            'gen_string': 400}}
-                               }
-            }
-         }
-
-    scenarios = test.NegativeAutoTest.generate_scenario(_description)
-
-    @test.attr(type=['negative', 'gate'])
-    def test_list_flavors_with_detail(self):
-        self.execute(self._description)
-
-
-class FlavorDetailsNegativeTestJSON(base.BaseV2ComputeTest,
-                                    test.NegativeAutoTest):
-    _interface = 'json'
-    _service = 'compute'
-
-    _description = \
-        {"name": "get-flavor-details",
-         "http-method": "GET",
-         "url": "flavors/%s",
-         "resources": ["flavor"]
-         }
-
-    scenarios = test.NegativeAutoTest.generate_scenario(_description)
+class FlavorsNegativeTestXML(base.BaseV2ComputeTest):
+    _interface = 'xml'
 
     @classmethod
     def setUpClass(cls):
-        super(FlavorDetailsNegativeTestJSON, cls).setUpClass()
-        cls.set_resource("flavor", cls.flavor_ref)
+        super(FlavorsNegativeTestXML, cls).setUpClass()
+        cls.client = cls.flavors_client
 
-    @test.attr(type=['negative', 'gate'])
-    def test_get_flavor_details(self):
+    @attr(type=['negative', 'gate'])
+    def test_invalid_minRam_filter(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.list_flavors_with_detail,
+                          {'minRam': 'invalid'})
+
+    @attr(type=['negative', 'gate'])
+    def test_invalid_minDisk_filter(self):
+        self.assertRaises(exceptions.BadRequest,
+                          self.client.list_flavors_with_detail,
+                          {'minDisk': 'invalid'})
+
+    @attr(type=['negative', 'gate'])
+    def test_non_existent_flavor_id(self):
         # flavor details are not returned for non-existent flavors
-        self.execute(self._description)
+        nonexistent_flavor_id = str(uuid.uuid4())
+        self.assertRaises(exceptions.NotFound, self.client.get_flavor_details,
+                          nonexistent_flavor_id)
