@@ -16,6 +16,7 @@
 import testscenarios
 
 from tempest.api.compute import base
+import tempest.api.compute.servers.api_schema as schema
 from tempest import test
 
 
@@ -27,27 +28,7 @@ class GetConsoleOutputNegativeTestJSON(base.BaseV2ComputeTest,
     _interface = 'json'
     _service = 'compute'
 
-    _description = {
-        "name": "get-console-output",
-        "http-method": "POST",
-        "url": "servers/%s/action",
-        "resources": ["server"],
-        "json-schema": {
-            "type": "object",
-            "properties": {
-                "os-getConsoleOutput": {
-                    "type": "object",
-                    "properties": {
-                        "length": {
-                        "type": ["integer", "string"],
-                        "minimum": 0
-                        }
-                    }
-                }
-            },
-            "additionalProperties": False
-        }
-    }
+    _description = schema.GetConsoleOutputJSON
 
     scenarios = test.NegativeAutoTest.generate_scenario(_description)
 

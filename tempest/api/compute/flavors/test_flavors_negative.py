@@ -13,36 +13,45 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import uuid
+import testscenarios
 
 from tempest.api.compute import base
-from tempest import exceptions
-from tempest.test import attr
+import tempest.api.compute.flavors.api_schema as schema
+from tempest import test
 
 
-class FlavorsNegativeTestXML(base.BaseV2ComputeTest):
-    _interface = 'xml'
+load_tests = testscenarios.load_tests_apply_scenarios
+
+
+class FlavorsListNegativeTestNewJSON(base.BaseV2ComputeTest,
+                                     test.NegativeAutoTest):
+    _interface = 'json'
+    _service = 'compute'
+
+    _description = schema.FlavorsListJSON
+
+    scenarios = test.NegativeAutoTest.generate_scenario(_description)
+
+    @test.attr(type=['negative', 'gate'])
+    def test_list_flavors_with_detail(self):
+        self.execute(self._description)
+
+
+class FlavorDetailsNegativeTestNewJSON(base.BaseV2ComputeTest,
+                                       test.NegativeAutoTest):
+    _interface = 'json'
+    _service = 'compute'
+
+    _description = schema.FlavorDetailsJSON
+
+    scenarios = test.NegativeAutoTest.generate_scenario(_description)
 
     @classmethod
     def setUpClass(cls):
-        super(FlavorsNegativeTestXML, cls).setUpClass()
-        cls.client = cls.flavors_client
+        super(FlavorDetailsNegativeTestNewJSON, cls).setUpClass()
+        cls.set_resource("flavor", cls.flavor_ref)
 
-    @attr(type=['negative', 'gate'])
-    def test_invalid_minRam_filter(self):
-        self.assertRaises(exceptions.BadRequest,
-                          self.client.list_flavors_with_detail,
-                          {'minRam': 'invalid'})
-
-    @attr(type=['negative', 'gate'])
-    def test_invalid_minDisk_filter(self):
-        self.assertRaises(exceptions.BadRequest,
-                          self.client.list_flavors_with_detail,
-                          {'minDisk': 'invalid'})
-
-    @attr(type=['negative', 'gate'])
-    def test_non_existent_flavor_id(self):
+    @test.attr(type=['negative', 'gate'])
+    def test_get_flavor_details(self):
         # flavor details are not returned for non-existent flavors
-        nonexistent_flavor_id = str(uuid.uuid4())
-        self.assertRaises(exceptions.NotFound, self.client.get_flavor_details,
-                          nonexistent_flavor_id)
+        self.execute(self._description)
