@@ -338,6 +338,22 @@ class NegativeAutoTest(BaseTestCase):
         cls.client = os.negative_client
 
     @staticmethod
+    def load_schema(file, script_location, interface):
+        """
+        Loads a schema from a file on a specified location and interface.
+
+        :param file: the file name
+        :param script_location: the full path of the script (__file__)
+        :param interface: xml/json (but only json is supported currently)
+        """
+        if interface == 'json':
+            fn = os.path.join(os.path.dirname(script_location), file)
+            LOG.debug("Open schema file: %s" % fn)
+            return json.load(open(fn))
+        else:
+            raise RuntimeError("Only json schemas are supported")
+
+    @staticmethod
     def generate_scenario(description):
         """
         Generates the test scenario list for a given description.
@@ -369,11 +385,11 @@ class NegativeAutoTest(BaseTestCase):
             scenario_list.append((scn_name, {"resource": (resource,
                                                           str(uuid.uuid4()))
                                              }))
-        if not schema:
-            return scenario_list
-        for invalid in generate_json.generate_invalid(schema):
-            scenario_list.append((invalid[0], {"schema": invalid[1],
-                                               "expected_result": invalid[2]}))
+        if schema is not None:
+            for invalid in generate_json.generate_invalid(schema):
+                scenario_list.append((invalid[0],
+                                      {"schema": invalid[1],
+                                       "expected_result": invalid[2]}))
         LOG.debug(scenario_list)
         return scenario_list
 
@@ -458,7 +474,7 @@ class NegativeAutoTest(BaseTestCase):
         """
         cls._resources[name] = resource
 
-    def get_resource(self, name, use_ref=True):
+    def get_resource(self, name):
         """
         Return a valid uuid for a type of resource. If a real resource is
         needed as part of a url then this method should return one. Otherwise
@@ -466,7 +482,6 @@ class NegativeAutoTest(BaseTestCase):
 
         :param name: The name of the kind of resource such as "flavor", "role",
             etc.
-        :use_ref: False will force the creation of the resource
         """
         if hasattr(self, "resource") and self.resource[0] == name:
             LOG.debug("Return invalid resource (%s) value: %s" %

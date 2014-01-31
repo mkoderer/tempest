@@ -585,7 +585,6 @@ class NegativeRestClient(RestClient):
 
     def send_request(self, method, url_template, resources, body=None):
         url = url_template % tuple(resources)
-        assert method in ["GET", "POST", "PUT", "PATCH", "HEAD", "DELETE"]
         if method == "GET":
             resp, body = self.get(url)
         elif method == "POST":
@@ -598,5 +597,9 @@ class NegativeRestClient(RestClient):
             resp, body = self.head(url)
         elif method == "DELETE":
             resp, body = self.delete(url)
+        elif method == "COPY":
+            resp, body = self.copy(url)
+        else:
+            assert False
 
         return resp, body

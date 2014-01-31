@@ -16,7 +16,6 @@
 import testscenarios
 
 from tempest.api.compute import base
-import tempest.api.compute.servers.api_schema as schema
 from tempest import test
 
 
@@ -27,9 +26,11 @@ class GetConsoleOutputNegativeTestJSON(base.BaseV2ComputeTest,
                                        test.NegativeAutoTest):
     _interface = 'json'
     _service = 'compute'
+    _schema_file = 'schemas/get_console_output.json'
 
-    _description = schema.GetConsoleOutputJSON
-
+    _description = test.NegativeAutoTest.load_schema(_schema_file,
+                                                     __file__,
+                                                     _interface)
     scenarios = test.NegativeAutoTest.generate_scenario(_description)
 
     @classmethod

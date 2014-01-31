@@ -16,7 +16,6 @@
 import testscenarios
 
 from tempest.api.compute import base
-import tempest.api.compute.flavors.api_schema as schema
 from tempest import test
 
 
@@ -27,9 +26,11 @@ class FlavorsListNegativeTestNewJSON(base.BaseV2ComputeTest,
                                      test.NegativeAutoTest):
     _interface = 'json'
     _service = 'compute'
+    _schema_file = 'schemas/flavors_list.json'
 
-    _description = schema.FlavorsListJSON
-
+    _description = test.NegativeAutoTest.load_schema(_schema_file,
+                                                     __file__,
+                                                     _interface)
     scenarios = test.NegativeAutoTest.generate_scenario(_description)
 
     @test.attr(type=['negative', 'gate'])
@@ -41,9 +42,11 @@ class FlavorDetailsNegativeTestNewJSON(base.BaseV2ComputeTest,
                                        test.NegativeAutoTest):
     _interface = 'json'
     _service = 'compute'
+    _schema_file = 'schemas/flavor_details.json'
 
-    _description = schema.FlavorDetailsJSON
-
+    _description = test.NegativeAutoTest.load_schema(_schema_file,
+                                                     __file__,
+                                                     _interface)
     scenarios = test.NegativeAutoTest.generate_scenario(_description)
 
     @classmethod
